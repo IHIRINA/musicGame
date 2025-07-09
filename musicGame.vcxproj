@@ -125,11 +125,18 @@
   <ItemGroup>
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Music.cpp" />
+    <ClCompile Include="Note.cpp" />
     <ClCompile Include="Photos.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h" />
+    <ClInclude Include="Music.h" />
+    <ClInclude Include="Note.h" />
     <ClInclude Include="Photos.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="musicGame.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

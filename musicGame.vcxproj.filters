@@ -24,6 +24,12 @@
     <ClCompile Include="Photos.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Music.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Note.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -32,5 +38,16 @@
     <ClInclude Include="Photos.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Music.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Note.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="musicGame.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

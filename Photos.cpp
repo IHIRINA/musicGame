@@ -23,7 +23,7 @@ IMAGE* Photos::loadImage(const string& file, int width, int height) {
 
 void Photos::cacheImage(const string& tag, const string& file, int width, int height) {
     auto it = images.find(tag);
-    if (it == images.end()) {
+    if (it != images.end()) {
         cout << "tag is<" << tag << ">image is exists" << endl;
         return;
     }
