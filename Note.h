@@ -14,5 +14,15 @@ public:
 	void destory() {
 		active = false;
 	}
+	bool isActive() const{
+		return active;
+	}
+	int getX() {
+		return x;
+	}
+	int getY() {
+		return y;
+	}
 };
+
 

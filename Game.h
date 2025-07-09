@@ -3,6 +3,8 @@
 class Game
 {
 	bool isRunning = false;
+	int startTime = 0;
+	int duration = 0;
 public:
 	static ExMessage msg;  //消息结构
 	int run();

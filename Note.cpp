@@ -11,11 +11,11 @@ Note::Note(int x, int y, int speed)
 }
 
 void Note::update() {
-	if (active) {
+	if (isActive()) {
 		y += speed;
 	}
 }
 
 void Note::render() {
-	putimage(x, y, Photos::getInstance()->getImage(type == 0 ? "tab1" : "tab2"));
+	putimage(x, y, Photos::getInstance()->getImage(type == 0 ? "tab2" : "tab1"));
 }

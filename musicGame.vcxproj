@@ -123,6 +123,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Assets.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Music.cpp" />
@@ -130,6 +131,7 @@
     <ClCompile Include="Photos.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Assets.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Music.h" />
     <ClInclude Include="Note.h" />
