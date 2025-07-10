@@ -27,7 +27,7 @@
     <ClCompile Include="Music.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Note.cpp">
+    <ClCompile Include="Notes.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Assets.cpp">
@@ -44,7 +44,7 @@
     <ClInclude Include="Music.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Note.h">
+    <ClInclude Include="Notes.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Assets.h">

@@ -123,18 +123,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Assets.cpp" />
+    <ClCompile Include="Assets.cpp">
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp17</LanguageStandard>
+    </ClCompile>
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Music.cpp" />
-    <ClCompile Include="Note.cpp" />
-    <ClCompile Include="Photos.cpp" />
+    <ClCompile Include="Notes.cpp" />
+    <ClCompile Include="Photos.cpp">
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp20</LanguageStandard>
+      <BuildStlModules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</BuildStlModules>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Assets.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Music.h" />
-    <ClInclude Include="Note.h" />
+    <ClInclude Include="Notes.h" />
     <ClInclude Include="Photos.h" />
   </ItemGroup>
   <ItemGroup>

@@ -1,35 +1,32 @@
 #include "Assets.h"
-#include <xmemory>
-using namespace std;
+#include "Notes.h"
 
-void Assets::addNote(int x, int y, int speed)
-{
-	auto n = new Note(x,y,speed);
-	notes.emplace_back(n);
+void Assets::addNote(int x, int y, int speed) {
+    notes.push_back(std::make_shared<Notes>(x, y, speed));  // 使用 make_shared
 }
 
 void Assets::update() {
-	for (auto& n : notes) {
-		n->update();
-	}
+    for (auto& n : notes) {
+        if (n) n->update();
+    }
 }
 
 void Assets::render() {
-	for (auto& n : notes) {
-		n->render();
-	}
+    for (auto& n : notes) {
+        if (n) n->render();
+    }
 }
 
 void Assets::clean() {
-	for (auto& n : notes) {
-		
-	}
+    notes.clear();  // shared_ptr 会自动释放内存
 }
 
-void Assets::refresh()
-{
-	notes.erase(
-		remove_if(notes.begin(), notes.end(), [](unique_ptr<Note>& n) {return n->isActive();}),
-		notes.end());
-
+void Assets::refresh() {
+    // 使用 remove_if + erase 现在安全了，因为 shared_ptr 可以拷贝
+    notes.erase(
+        std::remove_if(notes.begin(), notes.end(),
+            [](const std::shared_ptr<Notes>& n) {
+                return !n->isActive();
+            }),
+        notes.end());
 }

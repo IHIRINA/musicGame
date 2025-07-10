@@ -7,13 +7,14 @@
 #include "Music.h"
 #include "Assets.h"
 #include <vector>
+#include "Notes.h"
 using namespace std;
 //延时实现函数
 void delayf(int milliseconds) {
 	std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
 }
 ExMessage Game::msg;
-Note note(0,0,5);
+Notes note(0,0,5);
 Assets assets;
 Music music;
 
@@ -66,13 +67,16 @@ void Game::update() {
 	}
 
 	//检测键盘按下时是否刚好在判定线上
-	auto notes = assets.note();
-	for (auto& n : notes) {
-		if (n->getY() >= 700 - 20 && n->getY() >= 700 + 30) {
-			n->destory();
-			music.playBackgroundMusic("./Resource/music/");
+	if(msg.message == WM_KEYDOWN  && msg.vkcode == VK_SPACE) {
+		auto notes = assets.note();
+		for (auto& n : notes) {
+			if (n->getY() >= 670 && n->getY() <= 720) {
+				n->destory();
+				music.playBackgroundMusic("./Resource/music/");
+			}
 		}
 	}
+
 
 }
 
@@ -88,7 +92,7 @@ void Game::render() {
 
 void Game::handleMsg() {
 	if (peekmessage(&msg)) {
-		if (GetAsyncKeyState){
+		if (msg.message == WM_KEYDOWN){
 			if(msg.vkcode == VK_ESCAPE) { //如果按下ESC键
 				quit();
 			}

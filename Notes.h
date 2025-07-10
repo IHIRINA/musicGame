@@ -1,5 +1,5 @@
 #pragma once
-class Note
+class Notes
 {
 	int x;
 	int y;
@@ -7,8 +7,8 @@ class Note
 	int type;
 	bool active = true;
 public:
-	Note();
-	Note(int x, int y, int speed = 3);
+	Notes();
+	Notes(int x, int y, int speed = 3);
 	void update();
 	void render();
 	void destory() {
