@@ -130,17 +130,21 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Music.cpp" />
     <ClCompile Include="Notes.cpp" />
+    <ClCompile Include="NoteTimer.cpp" />
     <ClCompile Include="Photos.cpp">
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp20</LanguageStandard>
       <BuildStlModules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</BuildStlModules>
     </ClCompile>
+    <ClCompile Include="Score.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Assets.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Music.h" />
     <ClInclude Include="Notes.h" />
+    <ClInclude Include="NoteTimer.h" />
     <ClInclude Include="Photos.h" />
+    <ClInclude Include="Score.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="musicGame.rc" />
