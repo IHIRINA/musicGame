@@ -68,6 +68,9 @@ void Game::render() {
 	case PageState::GAME:
 		renderGamePage();
 		break;
+	case PageState::SCORE:
+		renderScorePage();
+		break;
 	}
 }
 
@@ -75,33 +78,37 @@ void Game::clean() {
 	closegraph();
 }
 
+
 void Game::update() {
 	if (currentPage != PageState::GAME) {
 		return;
 	}
+	// 如果是第一次进入游戏页面，记录音符开始掉落时间
+	if (!isNoteDropping) {
+		noteStartTime = clock();
+		isNoteDropping = true;
+		noteTimers[selectedSongIndex].init();
+		music.stopBackgroundMusic(); // 确保音乐还没开始
+		return;
+	}
+	
+	int delayTime[3] = { 1500,400,300 };
 
-	// 使用当前选中的NoteTimer
-	noteTimers[selectedSongIndex].init();
-	noteTimers[selectedSongIndex].generateNote(assets);
-
-	// 更新音符状态
-	assets.refresh();
-	assets.update();
-
-	if (msg.message == WM_KEYDOWN && msg.vkcode == VK_SPACE) {
-		auto notes = assets.note();
-		for (auto& n : notes) {
-			if (n->getY() >= 670 && n->getY() <= 720) {
-				n->destory();
-				PlaySound(TEXT("./Resource/music/hit.mp3"), NULL, SND_FILENAME | SND_ASYNC);
-				score.addScore(10);
-			}
-		}
-		msg.message = 0;  // 清空消息，避免重复处理
+	if (clock() - noteStartTime >= delayTime[selectedSongIndex] && !music.isMusicPlaying()) {
+		std::string songPath = "./Resource/music/" + songListFolder[selectedSongIndex];
+		music.playBackgroundMusic(songPath.c_str());
 	}
 
+		// 使用当前选中的NoteTimer
+		noteTimers[selectedSongIndex].init();
+		noteTimers[selectedSongIndex].generateNote(assets);
 
-}
+		// 更新音符状态
+		assets.refresh();
+		assets.update();
+
+	}
+
 
 
 void Game::renderHomePage()
@@ -154,6 +161,7 @@ void Game::renderHomePage()
 	EndBatchDraw();
 }
 
+
 // 绘制目录页（歌曲列表）
 void Game::renderSongListPage() {
 	BeginBatchDraw();
@@ -185,6 +193,18 @@ void Game::renderGamePage() {
 	cleardevice();
 	putimage(0, 0, Photos::getInstance()->getImage(songBgImg[selectedSongIndex]));
 	putimage(0, 700, Photos::getInstance()->getImage("line"));
+	setlinecolor(RED);
+	line(280, 0, 280, 700);
+	settextcolor(LIGHTGRAY);
+	settextstyle(30, 40, _T("宋体"));
+	outtextxy(100, 200, _T("S"));
+	outtextxy(380, 200, _T("D"));
+	outtextxy(660, 200, _T("F"));
+	outtextxy(940, 200, _T("J"));
+	outtextxy(1220, 200, _T("K"));
+	line(560, 0, 560, 700);
+	line(840, 0, 840, 700);
+	line(1120, 0, 1120, 700);
 	assets.render();
 	score.showScore(getwidth(), getheight());
 	EndBatchDraw();
@@ -196,7 +216,7 @@ void Game::renderScorePage() {
 	putimage(0, 0, Photos::getInstance()->getImage("score"));
 
 	// 绘制分数
-	settextcolor(BLACK);
+	settextcolor(WHITE);
 	settextstyle(60, 0, _T("宋体"));
 
 	char scoreText[20];
@@ -213,11 +233,14 @@ void Game::renderScorePage() {
 	int y = getheight() / 2 - 30;
 	outtextxy(x, y, tScoreText);
 
+	settextstyle(30, 0, _T("宋体"));
+	outtextxy(getwidth() / 2 - 100, getheight() - 100, _T("按ESC返回歌曲列表"));
+
 	EndBatchDraw();
 }
 
 void Game::handleMsg() {
-	if (peekmessage(&msg)) {
+	while (peekmessage(&msg)) {
 		// 鼠标点击事件
 		if (msg.message == WM_LBUTTONDOWN) {
 			int x = msg.x;
@@ -225,7 +248,6 @@ void Game::handleMsg() {
 
 			// 首页：点击"开始"按钮进入目录页
 			if (currentPage == PageState::HOME) {
-				// 按钮区域：(width/2-100, 400) 到 (width/2+100, 450)
 				int btnLeft = getwidth() / 2 - 100;
 				int btnRight = getwidth() / 2 + 100;
 				int btnTop = 450;
@@ -234,7 +256,6 @@ void Game::handleMsg() {
 					currentPage = PageState::SONG_LIST;
 				}
 			}
-
 			// 目录页：点击歌曲进入游戏页
 			else if (currentPage == PageState::SONG_LIST) {
 				for (int i = 0; i < songList.size(); i++) {
@@ -242,78 +263,126 @@ void Game::handleMsg() {
 					if (x >= 200 && x <= getwidth() - 200 && y >= yPos - 20 && y <= yPos + 20) {
 						selectedSongIndex = i;
 						std::string songPath = "./Resource/music/" + songListFolder[i];
-						music.stopBackgroundMusic();
-						music.playBackgroundMusic(songPath.c_str());
+						music.stopBackgroundMusic(); // 停止当前音乐
+						music.playBackgroundMusic(songPath.c_str()); // 播放选择歌曲
 						currentPage = PageState::GAME;
-
-						// 重置游戏状态
 						startTime = clock();
 						score.resetScore();
 						assets.clean();
-
-						// 关键修改：延迟后播放音乐
-						// 延迟播放音乐（仅负责播放，不处理停止）
-						std::thread([this, songPath, selectedSongIndexCopy = selectedSongIndex]() {  // 复制选中索引
-							std::vector<int> delays = { 1500, 0, 2500 };
-							int delayTime = delays[selectedSongIndexCopy];  // 使用复制的索引，避免主线程修改影响
-							std::this_thread::sleep_for(std::chrono::milliseconds(delayTime));
-
-							// 播放音乐前，再次检查是否仍在游戏页（防止用户中途退出）
-							if (this->currentPage == PageState::GAME && this->selectedSongIndex == selectedSongIndexCopy) {
-								music.stopBackgroundMusic();  // 停止之前的音乐
-								music.playBackgroundMusic(songPath.c_str());  // 播放当前歌曲
-							}
-							}).detach();
 						break;
 					}
 				}
 			}
 		}
-
-		// 键盘按键：esc返回上一级
-		if (msg.message == WM_KEYDOWN) {
-			if (msg.vkcode == VK_ESCAPE) {
-				if (currentPage == PageState::SONG_LIST) {
-					currentPage = PageState::HOME;  // 目录页→首页
-				}
-				else if (currentPage == PageState::GAME) {
-					Music::stopBackgroundMusic();
-					currentPage = PageState::SONG_LIST;  // 游戏页→目录页
-					noteTimers[selectedSongIndex].reset();
-					assets.clean();
-					music.playBackgroundMusic("./Resource/music/whipIt.wav");
-				}
-				else {
-					quit();  // 首页按ESC退出
-				}
-			}
-
-			else if (msg.vkcode == VK_RETURN) {
+		// 键盘事件处理
+		else if (msg.message == WM_KEYDOWN) {
+			switch (msg.vkcode) {
+			case VK_ESCAPE:
+				handleEscapeKey();
+				break;
+			case VK_RETURN:
 				if (currentPage == PageState::HOME) {
 					currentPage = PageState::SONG_LIST;
 				}
-			}
-
-			if (msg.vkcode == VK_UP) {
-				if (currentPage == PageState::SONG_LIST) {
-					if (selectedSongIndex > 0) {
-						selectedSongIndex--;
-					}
+				break;
+			case VK_UP:
+				if (currentPage == PageState::SONG_LIST && selectedSongIndex > 0) {
+					selectedSongIndex--;
 				}
-			}
-			else if (msg.vkcode == VK_DOWN) {
-				if (selectedSongIndex < songList.size() - 1) {
+				break;
+			case VK_DOWN:
+				if (currentPage == PageState::SONG_LIST && selectedSongIndex < songList.size() - 1) {
 					selectedSongIndex++;
 				}
-			}
-
-			if (msg.vkcode == VK_RIGHT) {
+				break;
+			case VK_RIGHT:
 				if (currentPage == PageState::GAME) {
 					currentPage = PageState::SCORE;
 					music.stopBackgroundMusic();
 				}
+			case 'S':
+				if (currentPage == PageState::GAME) {
+					const auto& notes = assets.note();
+					for (auto& n : notes) {
+						if (n->getY() >= 670 && n->getY() <= 720 && n->getX() >=0 && n->getX() <= 280) {
+							n->destory();
+							PlaySound(TEXT("./Resource/music/hit.wav"), NULL, SND_FILENAME | SND_ASYNC);
+							score.addScore(10);
+						}
+					}
+				}
+				break;
+			case 'D':
+				if (currentPage == PageState::GAME) {
+					const auto& notes = assets.note();
+					for (auto& n : notes) {
+						if (n->getY() >= 670 && n->getY() <= 720 && n->getX() >= 280 && n->getX() <= 560) {
+							n->destory();
+							PlaySound(TEXT("./Resource/music/hit.wav"), NULL, SND_FILENAME | SND_ASYNC);
+							score.addScore(10);
+						}
+					}
+				}
+				break;
+			case 'F':
+				if (currentPage == PageState::GAME) {
+					const auto& notes = assets.note();
+					for (auto& n : notes) {
+						if (n->getY() >= 670 && n->getY() <= 720 && n->getX() >= 560 && n->getX() <= 840) {
+							n->destory();
+							PlaySound(TEXT("./Resource/music/hit.wav"), NULL, SND_FILENAME | SND_ASYNC);
+							score.addScore(10);
+						}
+					}
+				}
+				break;
+			case 'J':	
+				if (currentPage == PageState::GAME) {
+					const auto& notes = assets.note();
+					for (auto& n : notes) {
+						if (n->getY() >= 670 && n->getY() <= 720 && n->getX() >= 840 && n->getX() <= 1120) {
+							n->destory();
+							PlaySound(TEXT("./Resource/music/hit.wav"), NULL, SND_FILENAME | SND_ASYNC);
+							score.addScore(10);
+						}
+					}
+				}
+				break;
+			case 'K':
+				if (currentPage == PageState::GAME) {
+					const auto& notes = assets.note();
+					for (auto& n : notes) {
+						if (n->getY() >= 670 && n->getY() <= 720 && n->getX() >= 1120 && n->getX() <= 1400) {
+							n->destory();
+							PlaySound(TEXT("./Resource/music/hit.wav"), NULL, SND_FILENAME | SND_ASYNC);
+							score.addScore(10);
+						}
+					}
+				}
+				break;
 			}
-
 		}
+	}
+}
+
+void Game::handleEscapeKey() {
+	switch (currentPage) {
+	case PageState::SONG_LIST:
+		currentPage = PageState::HOME;
+		break;
+	case PageState::GAME:
+		music.stopBackgroundMusic();
+		currentPage = PageState::SONG_LIST;
+		noteTimers[selectedSongIndex].reset();
+		assets.clean();
+		music.playBackgroundMusic("./Resource/music/whipIt.wav");
+		break;
+	case PageState::SCORE:
+		currentPage = PageState::SONG_LIST;
+		music.playBackgroundMusic("./Resource/music/whipIt.wav");
+		break;
+	default:
+		quit();
+		break;
 	}
 }

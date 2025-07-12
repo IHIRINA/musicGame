@@ -23,3 +23,9 @@ bool Music::isMusicFinished() {
     mciSendStringA("status bgMusic mode", status, sizeof(status), NULL);
     return strcmp(status, "stopped") == 0;
 }
+
+bool Music::isMusicPlaying() const {
+    char status[100];
+    mciSendStringA("status bgMusic mode", status, sizeof(status), NULL);
+    return strcmp(status, "playing") == 0;
+}

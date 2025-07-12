@@ -5,6 +5,8 @@
 #include <string.h>
 #include <string>
 #include "NoteTimer.h"
+#include <atomic>
+#include <mutex>
 
 // 页面状态枚举
 enum class PageState {
@@ -41,6 +43,9 @@ class Game
 
 	std::vector<NoteTimer> noteTimers;  // 每个歌曲对应一个NoteTimer
 
+	clock_t noteStartTime = 0;    // 记录音符开始掉落的时间
+	bool isNoteDropping = false;  // 标记音符是否正在掉落
+
 public:
 	static ExMessage msg;  //消息结构
 	int run();
@@ -55,6 +60,7 @@ public:
 	}
 
 	void handleMsg();
+	void handleEscapeKey();
 
 	void renderHomePage();
 	void renderSongListPage();

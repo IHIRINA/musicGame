@@ -34,10 +34,30 @@ bool NoteTimer::generateNote(Assets& assets)
 
     clock_t currentTime = clock();
     if (currentTime - lastNoteTime >= timeIntervals[intervalIndex]) {
-        // 生成新音符（随机X坐标，Y坐标固定为-40）
-        int x = rand() % (getwidth() - 300) + 100;
+        int section = rand() % 4;
+        int minX, maxX;
+        switch (section) {
+        case 0:
+            minX = 0;
+            maxX = 80;
+            break;
+        case 1:
+            minX = 280;
+            maxX = 360;
+            break;
+        case 2:
+            minX = 560;
+            maxX = 640;
+            break;
+        case 3:
+            minX = 840;
+            maxX = 920;
+            break;
+        }
+        // 在选定的区间内随机生成X坐标，Y坐标固定为-40
+        int x = rand() % (maxX - minX) + minX;
         assets.addNote(x, -40);
-        // 更新计时器和索引
+        // 更新计时信息
         lastNoteTime = currentTime;
         intervalIndex++;
         return true;
