@@ -25,7 +25,7 @@ public:
     void init();
 
     // 根据时间间隔生成音符（返回是否生成了新音符）
-    bool generateNote(Assets& assets);
+    bool generateNote(Assets& assets,int speed);
 
     // 重置状态（切换歌曲或重新开始时调用）
     void reset() {

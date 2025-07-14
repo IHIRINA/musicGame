@@ -39,6 +39,12 @@
     <ClCompile Include="NoteTimer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="User.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="UserManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -60,6 +66,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="NoteTimer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="User.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="UserManager.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

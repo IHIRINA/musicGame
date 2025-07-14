@@ -8,15 +8,18 @@
 #include "Assets.h"
 #include <vector>
 #include "Notes.h"
+#include "UserManager.h"
+#include <iostream>
 using namespace std;
 //延时实现函数
 void delayf(int milliseconds) {
 	std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
 }
 ExMessage Game::msg;
-Notes note(0, 0, 5);
+Notes note(0, 0, 6);
 Assets assets;
 Music music;
+UserManager userManager;
 
 int Game::run() {
 	//游戏主循环
@@ -44,11 +47,15 @@ bool Game::init(int width, int height) {
 	img->cacheImage("bg2", "./Resource/images/bg2.png", width, height);
 	img->cacheImage("bg3", "./Resource/images/bg3.png", width, height);
 	img->cacheImage("score", "./Resource/images/score.jpg", width, height);
+	img->cacheImage("bg4", "./Resource/images/bg4.jpg", width, height);
+	img->cacheImage("login", "./Resource/images/profile.jpeg", width, height);
+	img->cacheImage("start", "./Resource/images/start.png", 200, 50);
 
 	noteTimers = {
 		NoteTimer("./Resource/time1.txt"),  // 第一首歌的时间间隔文件
 		NoteTimer("./Resource/time2.txt"),  // 第二首歌的时间间隔文件
-		NoteTimer("./Resource/time3.txt")   // 第三首歌的时间间隔文件
+		NoteTimer("./Resource/time3.txt"),   // 第三首歌的时间间隔文件
+		NoteTimer("./Resource/time4.txt")   // 第四首歌的时间间隔文件
 	};
 
 	startTime = clock();
@@ -59,6 +66,9 @@ bool Game::init(int width, int height) {
 // 主渲染函数：根据当前页面状态切换
 void Game::render() {
 	switch (currentPage) {
+	case PageState::LOGIN:
+		renderLoginPage();
+		break;
 	case PageState::HOME:
 		renderHomePage();
 		break;
@@ -71,14 +81,18 @@ void Game::render() {
 	case PageState::SCORE:
 		renderScorePage();
 		break;
+	case PageState::PROFILE:
+		renderProfilePage();
+		break;
 	}
 }
 
+//清理资源函数
 void Game::clean() {
 	closegraph();
 }
 
-
+//更新
 void Game::update() {
 	if (currentPage != PageState::GAME) {
 		return;
@@ -92,7 +106,8 @@ void Game::update() {
 		return;
 	}
 	
-	int delayTime[3] = { 1500,400,300 };
+	int delayTime[4] = { 675,900,300,300 };
+	int speed[4] = { 2, 3, 4, 2 }; // 每首歌的音符速度
 
 	if (clock() - noteStartTime >= delayTime[selectedSongIndex] && !music.isMusicPlaying()) {
 		std::string songPath = "./Resource/music/" + songListFolder[selectedSongIndex];
@@ -101,7 +116,7 @@ void Game::update() {
 
 		// 使用当前选中的NoteTimer
 		noteTimers[selectedSongIndex].init();
-		noteTimers[selectedSongIndex].generateNote(assets);
+		noteTimers[selectedSongIndex].generateNote(assets,speed[selectedSongIndex]);
 
 		// 更新音符状态
 		assets.refresh();
@@ -109,8 +124,34 @@ void Game::update() {
 
 	}
 
+//加载登录页面
+void Game::renderLoginPage() {
+	BeginBatchDraw();
+	cleardevice();
+	putimage(0, 0, Photos::getInstance()->getImage("login"));
+	setbkmode(TRANSPARENT);
+	settextcolor(WHITE);
+	settextstyle(30, 0, "宋体");
 
+	// 显示用户名输入提示
+	outtextxy(500, 300, "用户名:");
+	outtextxy(500, 350, inputUsername.c_str());
 
+	// 显示密码输入提示
+	outtextxy(500, 400, "密码:");
+	std::string maskedPassword(inputPassword.length(), '*');
+	outtextxy(500, 450, maskedPassword.c_str());
+
+	// 显示登录按钮
+	setlinecolor(WHITE);
+	rectangle(600, 500, 800, 550);
+	outtextxy(670, 510, "登录");
+
+	EndBatchDraw();
+	return;
+}
+
+//加载主页
 void Game::renderHomePage()
 {
 	BeginBatchDraw();
@@ -153,6 +194,10 @@ void Game::renderHomePage()
 	setlinecolor(WHITE);
 	rectangle(getwidth() / 2 - 100, 450, getwidth() / 2 + 100, 500);  // 按钮边框
 	outtextxy(getwidth() / 2 - 30, 460, "开始");
+
+	// 绘制"个人中心"按钮
+	rectangle(getwidth() / 2 - 100, 550, getwidth() / 2 + 100, 600);  // 按钮边框
+	outtextxy(getwidth() / 2 - 60, 560, "个人中心");
 
 	// 绘制"ESC返回"提示
 	settextstyle(20, 0, "宋体");
@@ -205,11 +250,15 @@ void Game::renderGamePage() {
 	line(560, 0, 560, 700);
 	line(840, 0, 840, 700);
 	line(1120, 0, 1120, 700);
+	settextcolor(BLACK);
+	settextstyle(30, 15, _T("宋体"));
+	outtextxy(1100, 0, _T("按→结束游戏看得分"));
 	assets.render();
 	score.showScore(getwidth(), getheight());
 	EndBatchDraw();
 }
 
+//绘制分数页面
 void Game::renderScorePage() {
 	BeginBatchDraw();
 	cleardevice();
@@ -233,12 +282,48 @@ void Game::renderScorePage() {
 	int y = getheight() / 2 - 30;
 	outtextxy(x, y, tScoreText);
 
+	// 保存最大分数
+	
+	if (userManager.getCurrentUser()) {
+		userManager.getCurrentUser()->setMaxScore(selectedSongIndex, score.getScore());
+	}
+
 	settextstyle(30, 0, _T("宋体"));
 	outtextxy(getwidth() / 2 - 100, getheight() - 100, _T("按ESC返回歌曲列表"));
 
 	EndBatchDraw();
 }
 
+//绘制个人中心页面
+void Game::renderProfilePage() {
+	BeginBatchDraw();
+	cleardevice();
+	putimage(0, 0, Photos::getInstance()->getImage("login"));
+
+	settextcolor(WHITE);
+	settextstyle(60, 0, "宋体");
+	outtextxy(150, 100, "个人中心");
+
+	if (userManager.getCurrentUser()) {
+		settextstyle(30, 0, "宋体");
+		outtextxy(150, 200, ("用户名: " + userManager.getCurrentUser()->getUsername()).c_str());
+        std::string scoreText1 = "1. 花海: " + std::to_string(userManager.getCurrentUser()->getMaxScore(0));  
+        outtextxy(150, 250, scoreText1.c_str());
+		std::string scoreText2 = "2. 恋爱循环: " + std::to_string(userManager.getCurrentUser()->getMaxScore(1));
+		outtextxy(150, 300, scoreText2.c_str());
+		std::string scoreText3 = "3. 这么可爱真是抱歉: " + std::to_string(userManager.getCurrentUser()->getMaxScore(2));
+		outtextxy(150, 350, scoreText3.c_str());
+		std::string scoreText4 = "4. 喜欢和好喜欢的方程式: " + std::to_string(userManager.getCurrentUser()->getMaxScore(3));
+		outtextxy(150, 400, scoreText4.c_str());
+	}
+
+	settextstyle(30, 0, "宋体");
+	outtextxy(getwidth() / 2 - 100, getheight() - 100, "按ESC返回首页");
+
+	EndBatchDraw();
+}
+
+//处理鼠标键盘消息
 void Game::handleMsg() {
 	while (peekmessage(&msg)) {
 		// 鼠标点击事件
@@ -246,7 +331,21 @@ void Game::handleMsg() {
 			int x = msg.x;
 			int y = msg.y;
 
-			// 首页：点击"开始"按钮进入目录页
+			if (currentPage == PageState::LOGIN) {
+				if (x >= 600 && x <= 800 && y >= 500 && y <= 550) {
+                    if (!inputUsername.empty() && !inputPassword.empty()) {
+						currentPage = PageState::HOME;
+						userManager.addUser(inputUsername, inputPassword); // 添加新用户
+						userManager.setCurrentUser(&userManager.users.back()); // 设置当前用户为新用户
+					}
+					else {
+						// 登录失败提示
+						MessageBox(NULL, TEXT("用户名或密码错误"), TEXT("登录失败"), MB_OK);
+					}
+				}
+			}
+
+			// 首页点击"开始"按钮进入目录页
 			if (currentPage == PageState::HOME) {
 				int btnLeft = getwidth() / 2 - 100;
 				int btnRight = getwidth() / 2 + 100;
@@ -254,6 +353,12 @@ void Game::handleMsg() {
 				int btnBottom = 500;
 				if (x >= btnLeft && x <= btnRight && y >= btnTop && y <= btnBottom) {
 					currentPage = PageState::SONG_LIST;
+				}
+				// 首页点击"个人中心"按钮进入个人中心页
+				btnTop = 550;
+				btnBottom = 600;
+				if (x >= btnLeft && x <= btnRight && y >= btnTop && y <= btnBottom) {
+					currentPage = PageState::PROFILE;
 				}
 			}
 			// 目录页：点击歌曲进入游戏页
@@ -274,7 +379,7 @@ void Game::handleMsg() {
 				}
 			}
 		}
-		// 键盘事件处理
+		// 键盘按键事件
 		else if (msg.message == WM_KEYDOWN) {
 			switch (msg.vkcode) {
 			case VK_ESCAPE:
@@ -283,6 +388,17 @@ void Game::handleMsg() {
 			case VK_RETURN:
 				if (currentPage == PageState::HOME) {
 					currentPage = PageState::SONG_LIST;
+				}
+				else if (currentPage == PageState::LOGIN) {
+					if (!inputUsername.empty() && !inputPassword.empty()) {
+						currentPage = PageState::HOME;
+						userManager.addUser(inputUsername, inputPassword); // 添加新用户
+						userManager.setCurrentUser(&userManager.users.back()); // 设置当前用户为新用户
+					}
+					else {
+						// 登录失败提示
+						MessageBox(NULL, TEXT("用户名或密码错误"), TEXT("登录失败"), MB_OK);
+					}
 				}
 				break;
 			case VK_UP:
@@ -300,71 +416,83 @@ void Game::handleMsg() {
 					currentPage = PageState::SCORE;
 					music.stopBackgroundMusic();
 				}
+				break;
+			case VK_BACK:
+				if (currentPage == PageState::LOGIN) {
+					if (!inputPassword.empty()) {
+						inputPassword.pop_back();
+					}
+					else if (!inputUsername.empty()) {
+						inputUsername.pop_back();
+					}
+				}
+				break;
 			case 'S':
-				if (currentPage == PageState::GAME) {
-					const auto& notes = assets.note();
-					for (auto& n : notes) {
-						if (n->getY() >= 670 && n->getY() <= 720 && n->getX() >=0 && n->getX() <= 280) {
-							n->destory();
-							PlaySound(TEXT("./Resource/music/hit.wav"), NULL, SND_FILENAME | SND_ASYNC);
-							score.addScore(10);
-						}
-					}
-				}
-				break;
 			case 'D':
-				if (currentPage == PageState::GAME) {
-					const auto& notes = assets.note();
-					for (auto& n : notes) {
-						if (n->getY() >= 670 && n->getY() <= 720 && n->getX() >= 280 && n->getX() <= 560) {
-							n->destory();
-							PlaySound(TEXT("./Resource/music/hit.wav"), NULL, SND_FILENAME | SND_ASYNC);
-							score.addScore(10);
-						}
-					}
-				}
-				break;
 			case 'F':
-				if (currentPage == PageState::GAME) {
-					const auto& notes = assets.note();
-					for (auto& n : notes) {
-						if (n->getY() >= 670 && n->getY() <= 720 && n->getX() >= 560 && n->getX() <= 840) {
-							n->destory();
-							PlaySound(TEXT("./Resource/music/hit.wav"), NULL, SND_FILENAME | SND_ASYNC);
-							score.addScore(10);
-						}
-					}
-				}
-				break;
-			case 'J':	
-				if (currentPage == PageState::GAME) {
-					const auto& notes = assets.note();
-					for (auto& n : notes) {
-						if (n->getY() >= 670 && n->getY() <= 720 && n->getX() >= 840 && n->getX() <= 1120) {
-							n->destory();
-							PlaySound(TEXT("./Resource/music/hit.wav"), NULL, SND_FILENAME | SND_ASYNC);
-							score.addScore(10);
-						}
-					}
-				}
-				break;
+			case 'J':
 			case 'K':
 				if (currentPage == PageState::GAME) {
 					const auto& notes = assets.note();
+					bool hit = false;
 					for (auto& n : notes) {
-						if (n->getY() >= 670 && n->getY() <= 720 && n->getX() >= 1120 && n->getX() <= 1400) {
+						int noteX = n->getX();
+						int noteY = n->getY();
+						int minX, maxX;
+						switch (msg.vkcode) {
+						case 'S':
+							minX = 0;
+							maxX = 280;
+							break;
+						case 'D':
+							minX = 280;
+							maxX = 560;
+							break;
+						case 'F':
+							minX = 560;
+							maxX = 840;
+							break;
+						case 'J':
+							minX = 840;
+							maxX = 1120;
+							break;
+						case 'K':
+							minX = 1120;
+							maxX = 1400;
+							break;
+						}
+						if (noteY >= 670 && noteY <= 720 && noteX >= minX && noteX <= maxX) {
 							n->destory();
 							PlaySound(TEXT("./Resource/music/hit.wav"), NULL, SND_FILENAME | SND_ASYNC);
 							score.addScore(10);
+							score.addCombo();  // 增加连击数
+							hit = true;
+						}
+					}
+					if (!hit) {
+						score.resetCombo();  // 未击中音符，重置连击数
+					}
+				}
+				break;
+			default:
+				if (currentPage == PageState::LOGIN) {
+					if (msg.ch >= ' ' && msg.ch <= '~') {
+						if (inputUsername.length() < 20) {
+							inputUsername += static_cast<char>(msg.ch);
+						}
+						else if (inputPassword.length() < 20) {
+							inputPassword += static_cast<char>(msg.ch);
 						}
 					}
 				}
+				
 				break;
 			}
 		}
 	}
 }
 
+// 处理ESC键逻辑
 void Game::handleEscapeKey() {
 	switch (currentPage) {
 	case PageState::SONG_LIST:
@@ -380,6 +508,12 @@ void Game::handleEscapeKey() {
 	case PageState::SCORE:
 		currentPage = PageState::SONG_LIST;
 		music.playBackgroundMusic("./Resource/music/whipIt.wav");
+		break;
+	case PageState::PROFILE:
+		currentPage = PageState::HOME;
+		break;
+	case PageState::LOGIN:
+		currentPage = PageState::HOME;
 		break;
 	default:
 		quit();

@@ -43,3 +43,8 @@ IMAGE* Photos::getImage(const string& tag) {
     }
     return it->second.get();
 }
+
+
+
+
+

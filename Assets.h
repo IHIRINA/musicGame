@@ -7,7 +7,7 @@ class Assets {
     std::vector<std::shared_ptr<Notes>> notes;  // ¸ÄÓÃ shared_ptr
 
 public:
-    void addNote(int x, int y, int speed = 3);
+    void addNote(int x, int y, int speed = 5);
     void update();
     void render();
     void clean();

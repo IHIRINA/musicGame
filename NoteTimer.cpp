@@ -26,7 +26,7 @@ void NoteTimer::init()
     isLoaded = true;
 }
 
-bool NoteTimer::generateNote(Assets& assets)
+bool NoteTimer::generateNote(Assets& assets,int speed)
 {
     if (intervalIndex >= timeIntervals.size()) {
         return false;  // 所有间隔已用完，不生成音符
@@ -56,7 +56,7 @@ bool NoteTimer::generateNote(Assets& assets)
         }
         // 在选定的区间内随机生成X坐标，Y坐标固定为-40
         int x = rand() % (maxX - minX) + minX;
-        assets.addNote(x, -40);
+        assets.addNote(x, -40, speed);
         // 更新计时信息
         lastNoteTime = currentTime;
         intervalIndex++;
