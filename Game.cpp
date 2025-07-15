@@ -91,6 +91,9 @@ void Game::render() {
 	case PageState::PROFILE:
 		renderProfilePage();
 		break;
+	case PageState::HELP:
+		renderHelpPage();
+		break;
 	}
 }
 
@@ -158,6 +161,27 @@ void Game::renderLoginPage() {
 	return;
 }
 
+// 渲染帮助页面
+void Game::renderHelpPage() {
+	BeginBatchDraw();
+	cleardevice();
+	putimage(0, 0, Photos::getInstance()->getImage("login"));
+
+	settextcolor(WHITE);
+	settextstyle(60, 0, "宋体");
+	outtextxy(150, 100, "帮助信息");
+
+	settextstyle(30, 0, "宋体");
+	outtextxy(200, 200, "鼠标点击歌曲进入游戏");
+	outtextxy(200, 260, "按下 → 可以结束游戏查看分数");
+	outtextxy(200, 320, "按下 ESC 退出当前页面");
+
+	settextstyle(30, 0, "宋体");
+	outtextxy(getwidth() / 2 - 100, getheight() - 100, "按 ESC 返回主页");
+
+	EndBatchDraw();
+}
+
 //加载主页
 void Game::renderHomePage()
 {
@@ -197,6 +221,9 @@ void Game::renderHomePage()
 	IMAGE* profileButton = Photos::getInstance()->getImage("button");
 	Photos::getInstance()->putimage_alpha(getwidth() / 2 - 100, 550, profileButton);  // 绘制个人中心按钮
 
+	// 绘制"帮助"按钮
+	settextstyle(50, 30, "宋体");
+	outtextxy(30, getheight() - 50, "帮助");
 	// 绘制"ESC返回"提示
 	settextstyle(20, 0, "宋体");
 	outtextxy(getwidth() - 150, getheight() - 50, "按ESC退出游戏");
@@ -360,6 +387,10 @@ void Game::handleMsg() {
 				if (x >= btnLeft && x <= btnRight && y >= btnTop && y <= btnBottom) {
 					currentPage = PageState::PROFILE;
 				}
+				// 首页点击"帮助"按钮进入帮助页
+				if (x >= 30 && x <= 200 && y >= getheight() - 50 && y <= getheight()) {
+					currentPage = PageState::HELP;
+				}
 			}
 			// 目录页：点击歌曲进入游戏页
 			else if (currentPage == PageState::SONG_LIST) {
@@ -514,6 +545,9 @@ void Game::handleEscapeKey() {
 		currentPage = PageState::HOME;
 		break;
 	case PageState::LOGIN:
+		currentPage = PageState::HOME;
+		break;
+	case PageState::HELP:
 		currentPage = PageState::HOME;
 		break;
 	default:

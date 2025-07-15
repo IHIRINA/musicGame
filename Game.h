@@ -16,7 +16,8 @@ enum class PageState {
 	SONG_LIST,  // 目录页（歌曲列表）
 	GAME,       // 游戏页面（现有歌曲页）
 	SCORE,      //score
-	PROFILE
+	PROFILE,
+	HELP
 };
 
 class Game
@@ -83,5 +84,6 @@ public:
 	void renderScorePage();
 	void renderProfilePage();
 	void renderLoginPage();
+	void renderHelpPage();
 };
 
