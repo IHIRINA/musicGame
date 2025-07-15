@@ -7,6 +7,7 @@
 #include "NoteTimer.h"
 #include <atomic>
 #include <mutex>
+#include "Animation.h"
 
 // 页面状态枚举
 enum class PageState {
@@ -25,6 +26,7 @@ class Game
 	int duration = 0;
 	Score score;
 	PageState currentPage = PageState::LOGIN;  // 当前页面状态
+	Animation animation;
 
 
 	std::vector<std::string> songList = {     // 歌曲列表数据

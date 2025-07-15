@@ -10,6 +10,8 @@
 #include "Notes.h"
 #include "UserManager.h"
 #include <iostream>
+#include <easyx.h>
+#include "Animation.h"
 using namespace std;
 //延时实现函数
 void delayf(int milliseconds) {
@@ -19,6 +21,7 @@ ExMessage Game::msg;
 Notes note(0, 0, 6);
 Assets assets;
 Music music;
+Photos photos;
 UserManager userManager;
 
 int Game::run() {
@@ -39,6 +42,7 @@ bool Game::init(int width, int height) {
 	music.playBackgroundMusic("./Resource/music/whipIt.wav");
 	//加载所有的图片
 	auto img = Photos::getInstance();
+	img->cacheImage("title", "./Resource/images/home/title.png", 850, 300);
 	img->cacheImage("bg1", "./Resource/images/bg1.png", width, height);
 	img->cacheImage("line", "./Resource/images/line.png", width);
 	img->cacheImage("tab1", "./Resource/images/pink.png", 200, 50);
@@ -50,6 +54,9 @@ bool Game::init(int width, int height) {
 	img->cacheImage("bg4", "./Resource/images/bg4.jpg", width, height);
 	img->cacheImage("login", "./Resource/images/profile.jpeg", width, height);
 	img->cacheImage("start", "./Resource/images/start.png", 200, 50);
+	img->cacheImage("button", "./Resource/images/home/button.png", 200, 50);
+	
+	img->cacheImage("click", "./Resource/images/click.png", 200, 200);
 
 	noteTimers = {
 		NoteTimer("./Resource/time1.txt"),  // 第一首歌的时间间隔文件
@@ -106,7 +113,7 @@ void Game::update() {
 		return;
 	}
 	
-	int delayTime[4] = { 675,900,300,300 };
+	int delayTime[4] = { 675,900,350,300 };
 	int speed[4] = { 2, 3, 4, 2 }; // 每首歌的音符速度
 
 	if (clock() - noteStartTime >= delayTime[selectedSongIndex] && !music.isMusicPlaying()) {
@@ -181,23 +188,14 @@ void Game::renderHomePage()
 
 	loadimage(&homeImage, tFileName, 1400, 800, false);  // 加载图片
 	putimage(0, 0, &homeImage);  // 显示图片 
+	IMAGE* title = Photos::getInstance()->getImage("title");  // 获取标题图片
+	Photos::getInstance()->putimage_alpha(300, 70, title);
 
-	// 绘制标题
-	settextcolor(BLACK);
-	settextstyle(180, 90, _T("宋体"), 0, 0, 700, false, false, false);  // 设置文字样式
-	setbkmode(TRANSPARENT);  // 设置文字背景透明
-	outtextxy(350, 150, _T("节奏游戏"));  // 在画布上显示文字
-
-	// 绘制"开始"按钮
-	settextcolor(BLACK);
-	settextstyle(30, 0, "宋体");
-	setlinecolor(WHITE);
-	rectangle(getwidth() / 2 - 100, 450, getwidth() / 2 + 100, 500);  // 按钮边框
-	outtextxy(getwidth() / 2 - 30, 460, "开始");
-
-	// 绘制"个人中心"按钮
-	rectangle(getwidth() / 2 - 100, 550, getwidth() / 2 + 100, 600);  // 按钮边框
-	outtextxy(getwidth() / 2 - 60, 560, "个人中心");
+	IMAGE* startButton = Photos::getInstance()->getImage("start");
+	Photos::getInstance()->putimage_alpha(getwidth() / 2 - 100, 450, startButton);  // 绘制开始按钮
+	
+	IMAGE* profileButton = Photos::getInstance()->getImage("button");
+	Photos::getInstance()->putimage_alpha(getwidth() / 2 - 100, 550, profileButton);  // 绘制个人中心按钮
 
 	// 绘制"ESC返回"提示
 	settextstyle(20, 0, "宋体");
@@ -236,8 +234,10 @@ void Game::renderSongListPage() {
 void Game::renderGamePage() {
 	BeginBatchDraw();
 	cleardevice();
+	animation.update();  // 更新击中效果
 	putimage(0, 0, Photos::getInstance()->getImage(songBgImg[selectedSongIndex]));
 	putimage(0, 700, Photos::getInstance()->getImage("line"));
+	animation.draw();  // 绘制所有击中效果
 	setlinecolor(RED);
 	line(280, 0, 280, 700);
 	settextcolor(LIGHTGRAY);
@@ -463,8 +463,9 @@ void Game::handleMsg() {
 						}
 						if (noteY >= 670 && noteY <= 720 && noteX >= minX && noteX <= maxX) {
 							n->destory();
-							PlaySound(TEXT("./Resource/music/hit.wav"), NULL, SND_FILENAME | SND_ASYNC);
+							PlaySound(TEXT("./Resource/music/hitt.wav"), NULL, SND_FILENAME | SND_ASYNC);
 							score.addScore(10);
+							animation.addHitEffect(noteX, noteY-100);  // 添加击中效果
 							score.addCombo();  // 增加连击数
 							hit = true;
 						}
